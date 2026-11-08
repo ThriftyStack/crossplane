@@ -33,11 +33,11 @@ run "minio_stays_an_oauth2_app" {
       var.adoption_ids.grafana_provider == "6",
       var.adoption_ids.proxmox_provider == "5",
       var.adoption_ids.vault_provider == "4",
-      var.adoption_ids.longhorn_provider == "3",
+      var.adoption_ids.whoami_provider == "40",
       can(regex("^[0-9]+$", var.adoption_ids.grafana_provider)),
       can(regex("^[0-9]+$", var.adoption_ids.proxmox_provider)),
       can(regex("^[0-9]+$", var.adoption_ids.vault_provider)),
-      can(regex("^[0-9]+$", var.adoption_ids.longhorn_provider)),
+      can(regex("^[0-9]+$", var.adoption_ids.whoami_provider)),
       var.adoption_ids.oke_outpost == "729e49a1-6b9f-4776-a2bf-71c4a824d69e",
       var.adoption_ids.entitlement_groups_scope == "a5ebb0c0-0c96-4105-9e50-f6d08fb0e25c",
     ])
