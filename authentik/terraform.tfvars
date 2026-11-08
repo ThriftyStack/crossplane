@@ -74,13 +74,15 @@ oauth2_apps = {
   }
 }
 
-# Hosts match the legacy authentik tfvars. Longhorn has no entitlements.
+# Longhorn was retired on OKE on 2026-11-08 (gcloud-home-infra ADR-0018). The
+# outpost now fronts the estate-internal whoami, which has no login of its own
+# and only echoes request headers, so any homelab user may see it.
 proxy_apps = {
-  longhorn = {
-    name          = "Longhorn"
+  whoami = {
+    name          = "whoami (OKE internal)"
     group         = "Infrastructure"
-    external_host = "https://longhorn.oci.devoops.uk"
-    internal_host = "http://longhorn-frontend.longhorn-system.svc.cluster.local"
+    external_host = "https://whoami.oci.devoops.uk"
+    internal_host = "http://whoami.whoami.svc.cluster.local"
   }
 }
 
@@ -88,7 +90,7 @@ outposts = {
   oke = {
     name           = "oke"
     authentik_host = "https://auth.devoops.uk"
-    providers      = ["longhorn"]
+    providers      = ["whoami"]
   }
 }
 
@@ -99,7 +101,7 @@ bindings = {
   vault           = { target_type = "oauth2_app", target = "vault", subject_type = "group", subject = "homelab_admins" }
   proxmox         = { target_type = "oauth2_app", target = "proxmox", subject_type = "group", subject = "homelab_admins" }
   proxmox_admins  = { target_type = "entitlement", target = "proxmox_admins", subject_type = "group", subject = "homelab_admins" }
-  longhorn        = { target_type = "proxy_app", target = "longhorn", subject_type = "group", subject = "homelab_admins" }
+  whoami          = { target_type = "proxy_app", target = "whoami", subject_type = "group", subject = "homelab_users" }
   grafana_admins  = { target_type = "entitlement", target = "grafana_admins", subject_type = "group", subject = "homelab_admins" }
   grafana_viewers = { target_type = "entitlement", target = "grafana_viewers", subject_type = "group", subject = "homelab_users" }
   vault_admins    = { target_type = "entitlement", target = "vault_admins", subject_type = "group", subject = "homelab_admins" }
@@ -117,7 +119,7 @@ adoption_ids = {
   grafana_provider            = "6"
   proxmox_provider            = "5"
   vault_provider              = "4"
-  longhorn_provider           = "3"
+  whoami_provider             = "40"
   oke_outpost                 = "729e49a1-6b9f-4776-a2bf-71c4a824d69e"
   entitlement_groups_scope    = "a5ebb0c0-0c96-4105-9e50-f6d08fb0e25c"
 }

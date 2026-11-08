@@ -61,13 +61,13 @@ import {
 }
 
 import {
-  to = module.proxy_apps.authentik_provider_proxy.this["longhorn"]
-  id = var.adoption_ids.longhorn_provider
+  to = module.proxy_apps.authentik_provider_proxy.this["whoami"]
+  id = var.adoption_ids.whoami_provider
 }
 
 import {
-  to = module.proxy_apps.authentik_application.this["longhorn"]
-  id = "longhorn"
+  to = module.proxy_apps.authentik_application.this["whoami"]
+  id = "whoami"
 }
 
 import {

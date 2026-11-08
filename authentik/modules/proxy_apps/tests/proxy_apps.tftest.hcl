@@ -28,43 +28,43 @@ variables {
   outposts = {}
 }
 
-run "adopts_longhorn_and_oke" {
+run "adopts_whoami_and_oke" {
   command = plan
 
   variables {
     apps = {
-      longhorn = {
-        name          = "Longhorn"
+      whoami = {
+        name          = "whoami (OKE internal)"
         group         = "Infrastructure"
-        external_host = "https://longhorn.oci.devoops.uk"
-        internal_host = "http://longhorn-frontend.longhorn-system.svc.cluster.local"
+        external_host = "https://whoami.oci.devoops.uk"
+        internal_host = "http://whoami.whoami.svc.cluster.local"
       }
     }
     outposts = {
       oke = {
         name           = "oke"
         authentik_host = "https://auth.devoops.uk"
-        providers      = ["longhorn"]
+        providers      = ["whoami"]
       }
     }
   }
 
   assert {
     condition = alltrue([
-      authentik_provider_proxy.this["longhorn"].name == "Longhorn",
-      authentik_provider_proxy.this["longhorn"].external_host == "https://longhorn.oci.devoops.uk",
-      authentik_provider_proxy.this["longhorn"].internal_host == "http://longhorn-frontend.longhorn-system.svc.cluster.local",
-      authentik_provider_proxy.this["longhorn"].authorization_flow == "flow-1",
-      authentik_provider_proxy.this["longhorn"].invalidation_flow == "flow-1",
-      authentik_application.this["longhorn"].slug == "longhorn",
-      authentik_application.this["longhorn"].group == "Infrastructure",
-      authentik_application.this["longhorn"].protocol_provider == 7,
+      authentik_provider_proxy.this["whoami"].name == "whoami (OKE internal)",
+      authentik_provider_proxy.this["whoami"].external_host == "https://whoami.oci.devoops.uk",
+      authentik_provider_proxy.this["whoami"].internal_host == "http://whoami.whoami.svc.cluster.local",
+      authentik_provider_proxy.this["whoami"].authorization_flow == "flow-1",
+      authentik_provider_proxy.this["whoami"].invalidation_flow == "flow-1",
+      authentik_application.this["whoami"].slug == "whoami",
+      authentik_application.this["whoami"].group == "Infrastructure",
+      authentik_application.this["whoami"].protocol_provider == 7,
       authentik_outpost.this["oke"].name == "oke",
       authentik_outpost.this["oke"].protocol_providers == tolist([7]),
       jsondecode(authentik_outpost.this["oke"].config).authentik_host == "https://auth.devoops.uk",
       length(authentik_application_entitlement.this) == 0,
     ])
-    error_message = "Longhorn proxy, its application, and the oke outpost must keep the adopted names and hosts."
+    error_message = "The whoami proxy, its application, and the oke outpost must keep the adopted names and hosts."
   }
 }
 
@@ -73,20 +73,20 @@ run "keeps_entitlement_name" {
 
   variables {
     apps = {
-      longhorn = {
-        name          = "Longhorn"
+      whoami = {
+        name          = "whoami (OKE internal)"
         group         = "Infrastructure"
-        external_host = "https://longhorn.oci.devoops.uk"
-        internal_host = "http://longhorn-frontend.longhorn-system.svc.cluster.local"
+        external_host = "https://whoami.oci.devoops.uk"
+        internal_host = "http://whoami.whoami.svc.cluster.local"
         entitlements = {
-          longhorn_admins = "longhorn-admins"
+          whoami_viewers = "whoami-viewers"
         }
       }
     }
   }
 
   assert {
-    condition     = authentik_application_entitlement.this["longhorn_admins"].name == "longhorn-admins"
+    condition     = authentik_application_entitlement.this["whoami_viewers"].name == "whoami-viewers"
     error_message = "Entitlement names must be copied unchanged. Consumers match the string, not the configuration key."
   }
 }
