@@ -44,3 +44,21 @@ run "minio_stays_an_oauth2_app" {
     error_message = "minio must stay an oauth2_apps entry with entitlement minio_admins = consoleAdmin, and adoption_ids must be the live pbm uuid, numeric proxy pk, outpost uuid, and groups scope-mapping pk from terraform.tfvars."
   }
 }
+
+run "vaultwarden_is_sso_only_with_an_admin_managed_email" {
+  command = plan
+
+  assert {
+    condition = alltrue([
+      toset(var.oauth2_apps["vaultwarden"].scopes) == toset(["openid", "profile", "email", "offline_access"]),
+      var.oauth2_apps["vaultwarden"].email_verified,
+      length(var.oauth2_apps["vaultwarden"].redirects) == 1,
+      var.oauth2_apps["vaultwarden"].redirects[0].matching_mode == "strict",
+      var.oauth2_apps["vaultwarden"].redirects[0].url == "https://passwords.oci.devoops.uk/identity/connect/oidc-signin",
+      var.bindings["vaultwarden"].target == "vaultwarden",
+      var.bindings["vaultwarden"].subject == "homelab_users",
+      length([for slug, app in var.oauth2_apps : slug if app.email_verified]) == 1,
+    ])
+    error_message = "Vaultwarden must keep its strict callback, its refresh-token scope and the verified-email mapping; no other app may opt into that mapping without review."
+  }
+}

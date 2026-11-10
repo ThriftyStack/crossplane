@@ -79,3 +79,8 @@ import {
   to = module.oauth2_apps.authentik_property_mapping_provider_scope.entitlement_groups[0]
   id = var.adoption_ids.entitlement_groups_scope
 }
+
+import {
+  to = authentik_system_settings.this
+  id = "system_settings"
+}
