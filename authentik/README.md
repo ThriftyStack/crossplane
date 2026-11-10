@@ -27,15 +27,16 @@ Crossplane Workspace `authentik` applies this directory. Local validation is
 `make check`. The Workspace sets `vault_addr` to `https://vault.devoops.uk`.
 State stays in the GCS prefix `crossplane/authentik`.
 
-`authentik_system_settings.this` mirrors the live system settings read on
-2026-11-10 and imports as `system_settings`. The provider PUTs every attribute
-on create and update, so a value changed in the UI is reverted here unless it is
-also changed in `main.tf`. It exists for `default_user_change_email = false`.
-Users cannot change their own email, so the opt-in `email_verified` OAuth2 flag
-can truthfully send `email_verified: true` through the "Homelab
-administrator-managed email" scope mapping. Vaultwarden is the only app using
-that flag: 1.37.5 refuses an SSO signup unless the claim is `true`, and
-Authentik's managed email mapping always sends `false`.
+The opt-in `email_verified` OAuth2 flag swaps the managed email mapping for
+"Homelab administrator-managed email". That mapping sends `email_verified: true`
+only while System > Settings forbids users from changing their own email
+(`default_user_change_email`, false since before 2026-11-10). Vaultwarden is the
+only app using the flag: 1.37.5 refuses an SSO signup unless the claim is
+`true`, and Authentik's managed email mapping always sends `false`. The setting
+is read at token time, not managed here. `authentik_system_settings` (provider
+2026.5.1) cannot read a server whose `flags` object is empty: it fails with
+"no value given for required property core_default_app_access", and that
+failure blocked the whole Workspace.
 
 Vaultwarden's client needs Vault `infra/authentik/clients` keys
 `vaultwarden-client-id` and `vaultwarden` before this applies, or the provider

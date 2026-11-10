@@ -34,9 +34,9 @@ variable "apps" {
     logout_method = optional(string, "backchannel")
     logout_uri    = optional(string)
     entitlements  = optional(map(string), {})
-    # Assert email_verified=true. Sound only while users cannot change their own
-    # email (authentik_system_settings.this); Vaultwarden refuses SSO signups
-    # without it, and the managed email mapping always sends false.
+    # Send email_verified=true while users cannot change their own email.
+    # Vaultwarden refuses SSO signups without it, and the managed email
+    # mapping always sends false.
     email_verified = optional(bool, false)
   }))
 }
@@ -112,10 +112,14 @@ resource "authentik_property_mapping_provider_scope" "verified_email" {
   name        = "Homelab administrator-managed email"
   scope_name  = "email"
   description = "Email address, set only by administrators"
-  expression  = <<-PY
+  # Verified only while users cannot change their own email (System >
+  # Settings). If that is ever re-enabled, the claim turns false and
+  # Vaultwarden refuses new SSO signups instead of trusting a user-set address.
+  expression = <<-PY
+    from authentik.tenants.utils import get_current_tenant
     return {
         "email": request.user.email,
-        "email_verified": True,
+        "email_verified": not get_current_tenant().default_user_change_email,
     }
   PY
 }
