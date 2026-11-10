@@ -93,6 +93,20 @@ oauth2_apps = {
       bookstack_readers = "bookstack-readers"
     }
   }
+  # Password manager (gcloud-home-infra k8s/oke/vaultwarden). SSO only; the
+  # master password still decrypts the vault. offline_access gives Vaultwarden
+  # the refresh token it needs to outlive the 10-minute access token.
+  vaultwarden = {
+    name   = "Vaultwarden"
+    group  = "Security"
+    scopes = ["openid", "profile", "email", "offline_access"]
+    redirects = [
+      { matching_mode = "strict", url = "https://passwords.oci.devoops.uk/identity/connect/oidc-signin", redirect_uri_type = "authorization" },
+    ]
+    client_id      = { path = "authentik/clients", key = "vaultwarden-client-id" }
+    client_secret  = { path = "authentik/clients", key = "vaultwarden" }
+    email_verified = true
+  }
 }
 
 # Longhorn was retired on OKE on 2026-11-08 (gcloud-home-infra ADR-0018). The
@@ -132,6 +146,7 @@ bindings = {
   bookstack_admins  = { target_type = "entitlement", target = "bookstack_admins", subject_type = "group", subject = "homelab_admins" }
   bookstack_editors = { target_type = "entitlement", target = "bookstack_editors", subject_type = "group", subject = "bookstack_editors" }
   bookstack_readers = { target_type = "entitlement", target = "bookstack_readers", subject_type = "group", subject = "homelab_users" }
+  vaultwarden       = { target_type = "oauth2_app", target = "vaultwarden", subject_type = "group", subject = "homelab_users" }
 }
 
 # Live IDs of existing Authentik objects this root adopts.

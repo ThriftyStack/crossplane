@@ -34,6 +34,10 @@ variable "apps" {
     logout_method = optional(string, "backchannel")
     logout_uri    = optional(string)
     entitlements  = optional(map(string), {})
+    # Assert email_verified=true. Sound only while users cannot change their own
+    # email (authentik_system_settings.this); Vaultwarden refuses SSO signups
+    # without it, and the managed email mapping always sends false.
+    email_verified = optional(bool, false)
   }))
 }
 
@@ -52,7 +56,8 @@ locals {
   entitlements = merge({}, [for slug, app in var.apps : {
     for key, name in app.entitlements : key => { application = slug, name = name }
   }]...)
-  scopes = toset(flatten([for app in values(var.apps) : tolist(app.scopes)]))
+  scopes         = toset(flatten([for app in values(var.apps) : tolist(app.scopes)]))
+  verified_email = anytrue([for app in values(var.apps) : app.email_verified && contains(app.scopes, "email")])
 }
 
 # Client-secret resource arguments are not write-only in this provider.
@@ -102,6 +107,19 @@ resource "authentik_property_mapping_provider_scope" "entitlement_groups" {
   PY
 }
 
+resource "authentik_property_mapping_provider_scope" "verified_email" {
+  count       = local.verified_email ? 1 : 0
+  name        = "Homelab administrator-managed email"
+  scope_name  = "email"
+  description = "Email address, set only by administrators"
+  expression  = <<-PY
+    return {
+        "email": request.user.email,
+        "email_verified": True,
+    }
+  PY
+}
+
 resource "authentik_provider_oauth2" "this" {
   for_each = var.apps
 
@@ -118,7 +136,9 @@ resource "authentik_provider_oauth2" "this" {
   logout_method         = each.value.logout_method
   logout_uri            = each.value.logout_uri
   property_mappings = [for scope in each.value.scopes :
-    scope == "groups" ? authentik_property_mapping_provider_scope.entitlement_groups[0].id : data.authentik_property_mapping_provider_scope.default[scope].id
+    scope == "groups" ? authentik_property_mapping_provider_scope.entitlement_groups[0].id :
+    scope == "email" && each.value.email_verified ? authentik_property_mapping_provider_scope.verified_email[0].id :
+    data.authentik_property_mapping_provider_scope.default[scope].id
   ]
 
   lifecycle {
@@ -196,6 +216,10 @@ output "credential_paths" {
 
 output "default_scopes" {
   value = data.authentik_property_mapping_provider_scope.default
+}
+
+output "verified_email_scope" {
+  value = authentik_property_mapping_provider_scope.verified_email
 }
 
 output "entitlement_groups_scope" {
