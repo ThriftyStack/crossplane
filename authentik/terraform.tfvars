@@ -8,6 +8,10 @@ groups = {
     name    = "homelab-admins"
     parents = ["homelab_users"]
   }
+  bookstack_editors = {
+    name    = "bookstack-editors"
+    parents = ["homelab_users"]
+  }
 }
 
 oauth2_apps = {
@@ -72,6 +76,23 @@ oauth2_apps = {
       minio_admins = "consoleAdmin"
     }
   }
+  # BookStack maps these groups-claim values onto its Admin/Editor/Viewer roles
+  # (gcloud-home-infra images/bookstack). Removal applies at the next login.
+  bookstack = {
+    name   = "BookStack"
+    group  = "Documentation"
+    scopes = ["openid", "profile", "email", "groups"]
+    redirects = [
+      { matching_mode = "strict", url = "https://bookstack.oci.devoops.uk/oidc/callback", redirect_uri_type = "authorization" },
+    ]
+    client_id     = { path = "authentik/clients", key = "bookstack-client-id" }
+    client_secret = { path = "authentik/clients", key = "bookstack" }
+    entitlements = {
+      bookstack_admins  = "bookstack-admins"
+      bookstack_editors = "bookstack-editors"
+      bookstack_readers = "bookstack-readers"
+    }
+  }
 }
 
 # Longhorn was retired on OKE on 2026-11-08 (gcloud-home-infra ADR-0018). The
@@ -97,16 +118,20 @@ outposts = {
 policies = {}
 
 bindings = {
-  grafana         = { target_type = "oauth2_app", target = "grafana", subject_type = "group", subject = "homelab_users" }
-  vault           = { target_type = "oauth2_app", target = "vault", subject_type = "group", subject = "homelab_admins" }
-  proxmox         = { target_type = "oauth2_app", target = "proxmox", subject_type = "group", subject = "homelab_admins" }
-  proxmox_admins  = { target_type = "entitlement", target = "proxmox_admins", subject_type = "group", subject = "homelab_admins" }
-  whoami          = { target_type = "proxy_app", target = "whoami", subject_type = "group", subject = "homelab_users" }
-  grafana_admins  = { target_type = "entitlement", target = "grafana_admins", subject_type = "group", subject = "homelab_admins" }
-  grafana_viewers = { target_type = "entitlement", target = "grafana_viewers", subject_type = "group", subject = "homelab_users" }
-  vault_admins    = { target_type = "entitlement", target = "vault_admins", subject_type = "group", subject = "homelab_admins" }
-  minio           = { target_type = "oauth2_app", target = "minio", subject_type = "group", subject = "homelab_admins" }
-  minio_admins    = { target_type = "entitlement", target = "minio_admins", subject_type = "group", subject = "homelab_admins" }
+  grafana           = { target_type = "oauth2_app", target = "grafana", subject_type = "group", subject = "homelab_users" }
+  vault             = { target_type = "oauth2_app", target = "vault", subject_type = "group", subject = "homelab_admins" }
+  proxmox           = { target_type = "oauth2_app", target = "proxmox", subject_type = "group", subject = "homelab_admins" }
+  proxmox_admins    = { target_type = "entitlement", target = "proxmox_admins", subject_type = "group", subject = "homelab_admins" }
+  whoami            = { target_type = "proxy_app", target = "whoami", subject_type = "group", subject = "homelab_users" }
+  grafana_admins    = { target_type = "entitlement", target = "grafana_admins", subject_type = "group", subject = "homelab_admins" }
+  grafana_viewers   = { target_type = "entitlement", target = "grafana_viewers", subject_type = "group", subject = "homelab_users" }
+  vault_admins      = { target_type = "entitlement", target = "vault_admins", subject_type = "group", subject = "homelab_admins" }
+  minio             = { target_type = "oauth2_app", target = "minio", subject_type = "group", subject = "homelab_admins" }
+  minio_admins      = { target_type = "entitlement", target = "minio_admins", subject_type = "group", subject = "homelab_admins" }
+  bookstack         = { target_type = "oauth2_app", target = "bookstack", subject_type = "group", subject = "homelab_users" }
+  bookstack_admins  = { target_type = "entitlement", target = "bookstack_admins", subject_type = "group", subject = "homelab_admins" }
+  bookstack_editors = { target_type = "entitlement", target = "bookstack_editors", subject_type = "group", subject = "bookstack_editors" }
+  bookstack_readers = { target_type = "entitlement", target = "bookstack_readers", subject_type = "group", subject = "homelab_users" }
 }
 
 # Live IDs of existing Authentik objects this root adopts.
