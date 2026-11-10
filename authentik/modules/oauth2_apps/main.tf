@@ -127,13 +127,15 @@ resource "authentik_property_mapping_provider_scope" "verified_email" {
 resource "authentik_provider_oauth2" "this" {
   for_each = var.apps
 
-  name                  = each.value.name
-  client_id             = local.client_ids[each.key]
-  client_secret         = local.client_secrets[each.key]
-  client_type           = "confidential"
-  authorization_flow    = data.authentik_flow.authorization[0].id
-  invalidation_flow     = data.authentik_flow.invalidation[0].id
-  grant_types           = ["authorization_code"]
+  name               = each.value.name
+  client_id          = local.client_ids[each.key]
+  client_secret      = local.client_secrets[each.key]
+  client_type        = "confidential"
+  authorization_flow = data.authentik_flow.authorization[0].id
+  invalidation_flow  = data.authentik_flow.invalidation[0].id
+  # A refresh token is only usable with the refresh_token grant; without it
+  # Authentik answers every refresh with invalid_grant.
+  grant_types           = contains(each.value.scopes, "offline_access") ? ["authorization_code", "refresh_token"] : ["authorization_code"]
   issuer_mode           = "per_provider"
   allowed_redirect_uris = each.value.redirects
   signing_key           = data.authentik_certificate_key_pair.signing[0].id

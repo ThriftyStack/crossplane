@@ -82,3 +82,33 @@ run "no_opt_in_means_no_verified_mapping" {
     error_message = "Without an opt-in, no mapping may assert a verified email."
   }
 }
+
+run "only_offline_access_apps_may_refresh" {
+  command = plan
+
+  variables {
+    apps = {
+      a = {
+        name          = "A"
+        group         = "Test"
+        scopes        = ["email"]
+        redirects     = [{ matching_mode = "strict", url = "https://a.example/cb", redirect_uri_type = "authorization" }]
+        client_id     = { path = "clients", key = "a-client-id" }
+        client_secret = { path = "clients", key = "a" }
+      }
+      b = {
+        name          = "B"
+        group         = "Test"
+        scopes        = ["email", "offline_access"]
+        redirects     = [{ matching_mode = "strict", url = "https://b.example/cb", redirect_uri_type = "authorization" }]
+        client_id     = { path = "clients", key = "b-client-id" }
+        client_secret = { path = "clients", key = "b" }
+      }
+    }
+  }
+
+  assert {
+    condition     = toset(authentik_provider_oauth2.this["a"].grant_types) == toset(["authorization_code"]) && toset(authentik_provider_oauth2.this["b"].grant_types) == toset(["authorization_code", "refresh_token"])
+    error_message = "Only an app that requests offline_access may use the refresh_token grant."
+  }
+}
