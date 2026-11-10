@@ -100,9 +100,9 @@ variable "oauth2_apps" {
     logout_method = optional(string, "backchannel")
     logout_uri    = optional(string)
     entitlements  = optional(map(string), {})
-    # Assert email_verified=true. Sound only while users cannot change their own
-    # email (authentik_system_settings.this); Vaultwarden refuses SSO signups
-    # without it, and the managed email mapping always sends false.
+    # Send email_verified=true while users cannot change their own email.
+    # Vaultwarden refuses SSO signups without it, and the managed email
+    # mapping always sends false.
     email_verified = optional(bool, false)
   }))
 

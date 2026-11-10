@@ -46,7 +46,7 @@ run "only_opted_in_apps_get_the_verified_email_mapping" {
   command = apply
 
   assert {
-    condition     = length(authentik_property_mapping_provider_scope.verified_email) == 1 && strcontains(authentik_property_mapping_provider_scope.verified_email[0].expression, "\"email_verified\": True")
+    condition     = length(authentik_property_mapping_provider_scope.verified_email) == 1 && strcontains(authentik_property_mapping_provider_scope.verified_email[0].expression, "not get_current_tenant().default_user_change_email")
     error_message = "One verified-email mapping must exist when an app opts in."
   }
 
