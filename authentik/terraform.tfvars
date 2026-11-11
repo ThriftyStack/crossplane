@@ -106,6 +106,9 @@ oauth2_apps = {
     client_id      = { path = "authentik/clients", key = "vaultwarden-client-id" }
     client_secret  = { path = "authentik/clients", key = "vaultwarden" }
     email_verified = true
+    # Every SSO login asks for the YubiKey or TOTP (gcloud-home-infra
+    # docs/plans/vaultwarden-hardening.md). Enrol a device before enabling.
+    mfa = true
   }
 }
 

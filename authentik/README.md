@@ -38,6 +38,14 @@ is read at token time, not managed here. `authentik_system_settings` (provider
 "no value given for required property core_default_app_access", and that
 failure blocked the whole Workspace.
 
+The opt-in `mfa` OAuth2 flag gives that app's provider the authorization flow
+`homelab-provider-authorization-mfa`. Its one stage asks for a WebAuthn or TOTP
+device on every authorization, even inside an existing Authentik session, so
+other apps keep their sign-in unchanged. A user with no enrolled device is
+denied: the stage never offers enrolment, which would let a stolen password
+register its own device. Enrol a device (User settings > MFA Devices) before
+enabling the flag for an app you use. Vaultwarden is the only app using it.
+
 Vaultwarden's client needs Vault `infra/authentik/clients` keys
 `vaultwarden-client-id` and `vaultwarden` before this applies, or the provider
 preconditions fail. The same pair goes into gcloud-home-infra's

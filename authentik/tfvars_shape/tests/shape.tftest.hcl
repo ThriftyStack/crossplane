@@ -58,7 +58,8 @@ run "vaultwarden_is_sso_only_with_an_admin_managed_email" {
       var.bindings["vaultwarden"].target == "vaultwarden",
       var.bindings["vaultwarden"].subject == "homelab_users",
       length([for slug, app in var.oauth2_apps : slug if app.email_verified]) == 1,
+      var.oauth2_apps["vaultwarden"].mfa,
     ])
-    error_message = "Vaultwarden must keep its strict callback, its refresh-token scope and the verified-email mapping; no other app may opt into that mapping without review."
+    error_message = "Vaultwarden must keep its strict callback, its refresh-token scope, the verified-email mapping and MFA on every login; no other app may opt into that mapping without review."
   }
 }
