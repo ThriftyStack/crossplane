@@ -38,6 +38,9 @@ variable "apps" {
     # Vaultwarden refuses SSO signups without it, and the managed email
     # mapping always sends false.
     email_verified = optional(bool, false)
+    # Ask for a WebAuthn or TOTP device on every authorization for this app,
+    # even inside an existing Authentik session.
+    mfa = optional(bool, false)
   }))
 }
 
@@ -57,6 +60,7 @@ locals {
     for key, name in app.entitlements : key => { application = slug, name = name }
   }]...)
   scopes         = toset(flatten([for app in values(var.apps) : tolist(app.scopes)]))
+  mfa            = anytrue([for app in values(var.apps) : app.mfa])
   verified_email = anytrue([for app in values(var.apps) : app.email_verified && contains(app.scopes, "email")])
 }
 
@@ -73,6 +77,37 @@ data "vault_kv_secret_v2" "credentials" {
 data "authentik_flow" "authorization" {
   count = length(var.apps) > 0 ? 1 : 0
   slug  = "default-provider-authorization-implicit-consent"
+}
+
+# One authorization flow for every app with mfa = true. Authorization flows run
+# on each authorization, even inside an existing Authentik session, so other
+# apps keep their sign-in unchanged.
+resource "authentik_stage_authenticator_validate" "mfa" {
+  count = local.mfa ? 1 : 0
+
+  name           = "homelab-app-mfa-validation"
+  device_classes = ["webauthn", "totp"]
+  # Not `configure`: that would let a stolen password enrol its own device here.
+  not_configured_action = "deny"
+  last_auth_threshold   = "seconds=0"
+}
+
+resource "authentik_flow" "mfa_authorization" {
+  count = local.mfa ? 1 : 0
+
+  name           = "Authorize application with MFA"
+  title          = "Confirm with your security key or authenticator"
+  slug           = "homelab-provider-authorization-mfa"
+  designation    = "authorization"
+  authentication = "require_authenticated"
+}
+
+resource "authentik_flow_stage_binding" "mfa" {
+  count = local.mfa ? 1 : 0
+
+  target = authentik_flow.mfa_authorization[0].uuid
+  stage  = authentik_stage_authenticator_validate.mfa[0].id
+  order  = 10
 }
 
 data "authentik_flow" "invalidation" {
@@ -131,7 +166,7 @@ resource "authentik_provider_oauth2" "this" {
   client_id          = local.client_ids[each.key]
   client_secret      = local.client_secrets[each.key]
   client_type        = "confidential"
-  authorization_flow = data.authentik_flow.authorization[0].id
+  authorization_flow = each.value.mfa ? authentik_flow.mfa_authorization[0].uuid : data.authentik_flow.authorization[0].id
   invalidation_flow  = data.authentik_flow.invalidation[0].id
   # A refresh token is only usable with the refresh_token grant; without it
   # Authentik answers every refresh with invalid_grant.

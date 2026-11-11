@@ -104,6 +104,9 @@ variable "oauth2_apps" {
     # Vaultwarden refuses SSO signups without it, and the managed email
     # mapping always sends false.
     email_verified = optional(bool, false)
+    # Ask for a WebAuthn or TOTP device on every authorization for this app.
+    # Users without an enrolled device are denied, not offered enrolment.
+    mfa = optional(bool, false)
   }))
 
   validation {
