@@ -57,9 +57,27 @@ run "vaultwarden_is_sso_only_with_an_admin_managed_email" {
       var.oauth2_apps["vaultwarden"].redirects[0].url == "https://passwords.oci.devoops.uk/identity/connect/oidc-signin",
       var.bindings["vaultwarden"].target == "vaultwarden",
       var.bindings["vaultwarden"].subject == "homelab_users",
-      length([for slug, app in var.oauth2_apps : slug if app.email_verified]) == 1,
+      toset([for slug, app in var.oauth2_apps : slug if app.email_verified]) == toset(["vaultwarden", "affine"]),
       var.oauth2_apps["vaultwarden"].mfa,
     ])
     error_message = "Vaultwarden must keep its strict callback, its refresh-token scope, the verified-email mapping and MFA on every login; no other app may opt into that mapping without review."
+  }
+}
+
+run "affine_has_a_strict_callback_verified_email_and_mfa" {
+  command = plan
+
+  assert {
+    condition = alltrue([
+      toset(var.oauth2_apps["affine"].scopes) == toset(["openid", "profile", "email"]),
+      var.oauth2_apps["affine"].email_verified,
+      var.oauth2_apps["affine"].mfa,
+      length(var.oauth2_apps["affine"].redirects) == 1,
+      var.oauth2_apps["affine"].redirects[0].matching_mode == "strict",
+      var.oauth2_apps["affine"].redirects[0].url == "https://affine.oci.devoops.uk/oauth/callback",
+      var.bindings["affine"].target == "affine",
+      var.bindings["affine"].subject == "homelab_users",
+    ])
+    error_message = "AFFiNE must keep its strict callback, the verified-email mapping, MFA on every login and the homelab_users binding."
   }
 }

@@ -110,6 +110,21 @@ oauth2_apps = {
     # docs/plans/vaultwarden-hardening.md). Enrol a device before enabling.
     mfa = true
   }
+  # AFFiNE (gcloud-home-infra k8s/oke/affine). AFFiNE refuses an OIDC login
+  # unless email_verified is true (toeverything/AFFiNE#15696), and it matches
+  # accounts by email, so the claim must be the administrator-managed one.
+  affine = {
+    name   = "AFFiNE"
+    group  = "Documentation"
+    scopes = ["openid", "profile", "email"]
+    redirects = [
+      { matching_mode = "strict", url = "https://affine.oci.devoops.uk/oauth/callback", redirect_uri_type = "authorization" },
+    ]
+    client_id      = { path = "authentik/clients", key = "affine-client-id" }
+    client_secret  = { path = "authentik/clients", key = "affine" }
+    email_verified = true
+    mfa            = true
+  }
 }
 
 # Longhorn was retired on OKE on 2026-11-08 (gcloud-home-infra ADR-0018). The
@@ -150,6 +165,7 @@ bindings = {
   bookstack_editors = { target_type = "entitlement", target = "bookstack_editors", subject_type = "group", subject = "bookstack_editors" }
   bookstack_readers = { target_type = "entitlement", target = "bookstack_readers", subject_type = "group", subject = "homelab_users" }
   vaultwarden       = { target_type = "oauth2_app", target = "vaultwarden", subject_type = "group", subject = "homelab_users" }
+  affine            = { target_type = "oauth2_app", target = "affine", subject_type = "group", subject = "homelab_users" }
 }
 
 # Live IDs of existing Authentik objects this root adopts.

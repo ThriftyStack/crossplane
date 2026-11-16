@@ -30,9 +30,10 @@ State stays in the GCS prefix `crossplane/authentik`.
 The opt-in `email_verified` OAuth2 flag swaps the managed email mapping for
 "Homelab administrator-managed email". That mapping sends `email_verified: true`
 only while System > Settings forbids users from changing their own email
-(`default_user_change_email`, false since before 2026-11-10). Vaultwarden is the
-only app using the flag: 1.37.5 refuses an SSO signup unless the claim is
-`true`, and Authentik's managed email mapping always sends `false`. The setting
+(`default_user_change_email`, false since before 2026-11-10). Vaultwarden and
+AFFiNE use the flag. Vaultwarden 1.37.5 refuses an SSO signup unless the claim is
+`true`, and Authentik's managed email mapping always sends `false`. AFFiNE 0.27
+rejects the login the same way. The setting
 is read at token time, not managed here. `authentik_system_settings` (provider
 2026.5.1) cannot read a server whose `flags` object is empty: it fails with
 "no value given for required property core_default_app_access", and that
@@ -44,9 +45,13 @@ device on every authorization, even inside an existing Authentik session, so
 other apps keep their sign-in unchanged. A user with no enrolled device is
 denied: the stage never offers enrolment, which would let a stolen password
 register its own device. Enrol a device (User settings > MFA Devices) before
-enabling the flag for an app you use. Vaultwarden is the only app using it.
+enabling the flag for an app you use. Vaultwarden and AFFiNE use it.
 
 Vaultwarden's client needs Vault `infra/authentik/clients` keys
 `vaultwarden-client-id` and `vaultwarden` before this applies, or the provider
 preconditions fail. The same pair goes into gcloud-home-infra's
 `infra/oke/vaultwarden`.
+
+AFFiNE's client needs keys `affine-client-id` and `affine` at the same path,
+and the same pair in `infra/oke/affine` (`oidc-client-id`,
+`oidc-client-secret`).
